@@ -19,6 +19,7 @@
 
 #include "DumpAsMsgPackDev.h"
 #include "DumpAsTextDev.h"
+#include "NopDev.h"
 
 msgpack::packer<std::ostream> packer(&std::cout);
 
@@ -189,6 +190,25 @@ void dump_page(Page *page) {
 	text->decRefCnt();
 }
 
+void dump_page_nop(Page *page) {
+	auto dev = new NopDev();
+
+	auto gfx = page->createGfx(
+		dev,
+		72.0, 72.0, 0,
+		gFalse, /* useMediaBox */
+		gTrue, /* Crop */
+		-1, -1, -1, -1,
+		gFalse, /* printing */
+		NULL, NULL
+	);
+
+	page->display(gfx);
+
+	delete gfx;
+	delete dev;
+}
+
 void dump_document(PDFDoc *doc) {
 	int n_pages = doc->getNumPages();
 
@@ -197,13 +217,14 @@ void dump_document(PDFDoc *doc) {
 	// Pages are one-based in this API. Beware, 0 based elsewhere.
 	for (int i = 1; i < n_pages+1; i++) {
 		dump_page(doc->getPage(i));
+		// dump_page_nop(doc->getPage(i));
 	}
 }
 
 int main(int argc, char *argv[]) {
 	if (argc < 2) {
 		std::cerr << "usage: pdf2msgpack <filename>" << std::endl;
-		exit(1);
+		return 1;
 	}
 
 	if (!globalParams) {
@@ -212,18 +233,18 @@ int main(int argc, char *argv[]) {
 
 	UnicodeMap *uMap;
 	if (!(uMap = globalParams->getTextEncoding())) {
-		exit(127);
+		return 127;
 	}
 
 	auto doc = new PDFDoc(new GooString(argv[1]));
 	if (!doc) {
 		std::cerr << "Problem loading document." << std::endl;
-		exit(64);
+		return 64;
 	}
 
 	if (!doc->isOk()) {
 		std::cerr << "Failed to open: " << doc->getErrorCode() << std::endl;
-		exit(63);
+		return 63;
 	}
 
 	// dump_document_meta(doc, uMap);
