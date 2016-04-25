@@ -61,17 +61,15 @@ static int install_syscall_filter(void)
 		.len = (unsigned short)(sizeof(filter)/sizeof(filter[0])),
 		.filter = filter,
 	};
-	printf("install_syscall_filter() start\n");
 
 	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0)) {
-		// perror("prctl(NO_NEW_PRIVS)");
+		perror("prctl(NO_NEW_PRIVS)");
 		exit(99);
 	}
 	if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)) {
-		// perror("prctl(SECCOMP)");
+		perror("prctl(SECCOMP)");
 		exit(99);
 	}
-	printf("install_syscall_filter() done\n");
 	return 0;
 }
 
